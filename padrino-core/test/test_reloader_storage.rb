@@ -26,27 +26,4 @@ describe "Padrino::Reloader::Storage" do
       end
     end
   end
-
-  describe "#new_classes" do
-    before do
-      @snapshot = Padrino::Reloader::Storage.send(:object_classes)
-    end
-
-    it 'should return list of new classes' do
-      skip
-      class OSTest; end
-      module OSTestModule; class B; end; end
-
-      new_classes = Padrino::Reloader::Storage.send(:new_classes, @snapshot)
-
-      assert_equal new_classes.size, 3
-      assert_equal new_classes.include?(OSTest), true
-      assert_equal new_classes.include?(OSTestModule::B), true
-    end
-
-    it 'should return a Set object' do
-      new_classes = Padrino::Reloader::Storage.send(:new_classes, @snapshot)
-      assert_equal new_classes.kind_of?(Set), true
-    end
-  end
 end

@@ -31,8 +31,9 @@ module Padrino
       end
 
       def commit(name)
+        constants = object_classes
         entry = {
-          :constants => new_classes(@old_entries[name][:constants]),
+          :constants => constants - @old_entries[name][:constants],
           :features  => Set.new($LOADED_FEATURES) - @old_entries[name][:features] - [name]
         }
         files[name] = entry
@@ -40,7 +41,7 @@ module Padrino
       end
 
       def rollback(name)
-        new_classes(@old_entries[name][:constants]).each do |klass|
+        (object_classes - @old_entries[name][:constants]).each do |klass|
           loaded_in_name = files.each do |file, data|
                              next if file == name
                              break if data[:constants].include?(klass)
@@ -60,27 +61,10 @@ module Padrino
       # Returns all the classes in the object space.
       #
       def object_classes
-        klasses = Set.new
-
-        ObjectSpace.each_object(::Class).each do |klass|
-          if block_given?
-            if filtered_class = yield(klass)
-              klasses << filtered_class
-            end
-          else
-            klasses << klass
-          end
-        end
-
-        klasses
-      end
-
-      ##
-      # Returns a list of object space classes that are not included in "snapshot".
-      #
-      def new_classes(snapshot)
-        object_classes do |klass|
-          snapshot.include?(klass) ? nil : klass
+        if block_given?
+          Set.new(ObjectSpace.each_object(::Class).select { |klass| klass == yield(klass) })
+        else
+          Set.new(ObjectSpace.each_object(::Class))
         end
       end
     end
