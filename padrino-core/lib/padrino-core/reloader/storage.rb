@@ -18,12 +18,12 @@ module Padrino
         files.delete(name)
       end
 
-      def prepare(name)
+      def prepare(name, constants = nil)
         file = remove(name)
         @old_entries ||= {}
         @old_entries[name] = {
-          :constants => object_classes,
-          :features  => old_features = Set.new($LOADED_FEATURES.dup)
+          :constants => (constants || object_classes),
+          :features  => old_features = Set.new($LOADED_FEATURES)
         }
         features = file && file[:features] || []
         features.each{ |feature| Reloader.safe_load(feature, :force => true) }
@@ -38,6 +38,7 @@ module Padrino
         }
         files[name] = entry
         @old_entries.delete(name)
+        return constants
       end
 
       def rollback(name)

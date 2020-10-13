@@ -146,12 +146,14 @@ module Padrino
 
       files = paths.flatten.flat_map{ |path| Dir.glob(path).sort_by{ |filename| filename.count('/') } }.uniq
 
+      $_loader_constants = nil
+
       until files.empty?
         error = fatal = loaded = nil
 
         files.dup.each do |file|
           begin
-            Reloader.safe_load(file, options)
+            Reloader.safe_load(file, options, true)
             files.delete(file)
             loaded = true
           rescue NameError, LoadError => error
@@ -169,6 +171,8 @@ module Padrino
         end
       end
     end
+
+    $_loader_constants = nil
 
     ##
     # Returns default list of path globs to load as dependencies.

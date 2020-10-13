@@ -84,17 +84,22 @@ module Padrino
     ##
     # A safe Kernel::require which issues the necessary hooks depending on results
     #
-    def safe_load(file, options={})
+    def safe_load(file, options={}, initial=false)
       began_at = Time.now
       file     = figure_path(file)
       return unless options[:force] || file_changed?(file)
       return require(file) if feature_excluded?(file)
 
-      Storage.prepare(file) # might call #safe_load recursively
+      Storage.prepare(file, initial ? $_loader_constants : nil) # might call #safe_load recursively
       logger.devel(file_new?(file) ? :loading : :reload, began_at, file)
       begin
         with_silence{ require(file) }
-        Storage.commit(file)
+        if initial
+          $_loader_constants = Storage.commit(file)
+        else
+          Storage.commit(file)
+        end
+
         update_modification_time(file)
       rescue Exception => exception
         unless options[:cyclic]
@@ -102,6 +107,7 @@ module Padrino
           logger.error "Failed to load #{file}; removing partially defined constants"
         end
         Storage.rollback(file)
+        $_loader_constants = nil
         raise
       end
     end
